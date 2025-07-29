@@ -1,47 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { NotesProvider } from "./contexts/NotesContext";
+import { injectTheme } from "./theme";
+import Sidebar from "./components/Sidebar";
+import TopBar from "./components/TopBar";
+import NoteList from "./components/NoteList";
+import NoteEditor from "./components/NoteEditor";
+import AuthPage from "./components/AuthPage";
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  React.useEffect(() => {
+    injectTheme();
+  }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <AuthProvider>
+      <NotesProvider>
+        <MainLayout />
+      </NotesProvider>
+    </AuthProvider>
+  );
+}
+
+// MainLayout switches between Auth and main UI
+function MainLayout() {
+  const { user } = useAuth();
+  const [selectedNote, setSelectedNote] = React.useState(null);
+
+  if (!user) return <AuthPage />;
+
+  return (
+    <div className="app-root">
+      <Sidebar onSelectNote={setSelectedNote} />
+      <div className="content-area">
+        <TopBar />
+        <div className="main-panel">
+          <NoteList onSelect={setSelectedNote} selectedNote={selectedNote} />
+          <NoteEditor noteId={selectedNote} />
+        </div>
+      </div>
     </div>
   );
 }
